@@ -1,15 +1,63 @@
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-public class Main {
-    public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
+package singleton;
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            System.out.println("i = " + i);
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
+
+public class ConfigurationManager {
+
+    private static volatile ConfigurationManager instance;
+
+    private Map<String, String> settings;
+
+    private ConfigurationManager() {
+        settings = new HashMap<>();
+    }
+
+    public static ConfigurationManager getInstance() {
+        if (instance == null) {
+            synchronized (ConfigurationManager.class) {
+                if (instance == null) {
+                    instance = new ConfigurationManager();
+                }
+            }
         }
+        return instance;
+    }
+
+    public void set(String key, String value) {
+        settings.put(key, value);
+    }
+
+    public String get(String key) {
+        if (!settings.containsKey(key)) {
+            throw new RuntimeException("Нет такой настройки: " + key);
+        }
+        return settings.get(key);
+    }
+
+    public void loadFromFile(String path) throws IOException {
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split("=", 2);
+                if (parts.length == 2) {
+                    settings.put(parts[0].trim(), parts[1].trim());
+                }
+            }
+        }
+    }
+
+    public void saveToFile(String path) throws IOException {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(path))) {
+            for (Map.Entry<String, String> entry : settings.entrySet()) {
+                bw.write(entry.getKey() + "=" + entry.getValue());
+                bw.newLine();
+            }
+        }
+    }
+
+    public void printAll() {
+        settings.forEach((k, v) -> System.out.println(k + " = " + v));
     }
 }
